@@ -69,14 +69,19 @@ int main(int argc, char *argv[])
 
     greyscaleProcessing(src,gry);
 
-    imwrite("grayscale.png", gry);
+    //nombre de la imagen en escala de grises
+    string string1(argv[1]);
+    string1 = string1.substr(0, string1.size() - 4);
+    string1 += "grayscale.png";
+
+    imwrite(string1, gry);
 
     float Kernel[3][3] = {
                           {-1, 0, 1},
                           {-2, 0, 2},
                           {-1, 0, 1}
     };
-    
+
     float Kernel2[3][3] = {
                           {-1, -2, -1},
                           {0, 0, 0},
