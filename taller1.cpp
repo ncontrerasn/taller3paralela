@@ -1,13 +1,14 @@
-#include<iostream>
+#include <iostream>
 #include <cmath>
-#include<opencv2/imgproc/imgproc.hpp>
-#include<opencv2/highgui/highgui.hpp>
-#include<opencv2/imgcodecs.hpp>
+#include <fstream>
 #include <sys/time.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 using namespace std;
 using namespace cv;
-
+using std::ofstream;
 
 void noBorderProcessing(Mat src, Mat dst, float Kernel[][3], float Kernel2[][3])
 {
@@ -75,6 +76,7 @@ int main(int argc, char *argv[])
                           {-2, 0, 2},
                           {-1, 0, 1}
     };
+    
     float Kernel2[3][3] = {
                           {-1, -2, -1},
                           {0, 0, 0},
@@ -93,8 +95,15 @@ int main(int argc, char *argv[])
     gettimeofday(&tval_after, NULL);
    
     timersub(&tval_after, &tval_before, &tval_result);
+
+    //escritura de los tiempos en el txt
+    ofstream myfile;
+    myfile.open("tiempos.txt", std::ios_base::app);
+    myfile << "Imagen: " << argv[1] << " - ";
+    myfile << "Tiempo: " << tval_result.tv_sec << "." << tval_result.tv_usec << " s\n";
+    myfile.close();
    
-    printf("Time elapsed: %ld.%06ld\n", (long int)tval_result.tv_sec,(long int)tval_result.tv_usec);
+    //mostrar las imagenes de entrada y salida
     namedWindow("final");
     imshow("final", dst);
 
@@ -105,4 +114,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
