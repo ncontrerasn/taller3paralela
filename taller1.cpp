@@ -48,28 +48,23 @@ void greyscaleProcessing(Mat src, Mat gry)
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-
     //Definicion de las variables de imagenes
     Mat src, dst, gry;
-/*
-    clock_t start, stop;
-    start = clock();	*/
-    
 
     struct timeval tval_before, tval_after, tval_result;
-   gettimeofday(&tval_before, NULL);
+    gettimeofday(&tval_before, NULL);
 
     //Carga de la imagen principal
-    src = imread("4k.jpg",IMREAD_COLOR);
+    src = imread(argv[1], IMREAD_COLOR);
 
     if (!src.data)
     {
         return -1;
     }
 
-    gry = imread("4k.jpg");
+    gry = imread(argv[1]);
 
     greyscaleProcessing(src,gry);
 
@@ -93,19 +88,13 @@ int main()
 
     noBorderProcessing(gry, dst, Kernel, Kernel2);
 
-    imwrite("sobel.png", dst);
+    imwrite(argv[2], dst);
 
-    /*
-    stop = clock();
-    printf("\nCLOCKS_PER_SEC = %ld\n",stop-start); //1000000
-	printf("%lf ms\n",((double)(stop-start) * 1000.0)/CLOCKS_PER_SEC );
-
-*/
     gettimeofday(&tval_after, NULL);
    
-   timersub(&tval_after, &tval_before, &tval_result);
+    timersub(&tval_after, &tval_before, &tval_result);
    
-   printf("Time elapsed: %ld.%06ld\n", (long int)tval_result.tv_sec,(long int)tval_result.tv_usec);
+    printf("Time elapsed: %ld.%06ld\n", (long int)tval_result.tv_sec,(long int)tval_result.tv_usec);
     namedWindow("final");
     imshow("final", dst);
 
