@@ -1,5 +1,13 @@
-# taller1parelela
+# Taller 1 Parelela
 
-compilar con g++ taller1.cpp -o t1 `pkg-config --cflags --libs opencv`
+## Para probar individualmente:
 
-correr con ./t1 4k.jpg 4ksobel.jpg
+Compilar con: g++ taller1.cpp -o t1 `pkg-config --cflags --libs opencv`
+
+Correr con: ./t1 4k.jpg 4ksobel.jpg
+
+## Para correr todo con el script:
+
+Dar permiso al script con: chmod 755 script_ejecutar_todo.sh 
+
+ejecutarlo con: ./script_ejecutar_todo.sh
