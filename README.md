@@ -2,7 +2,7 @@
 
 ## Para probar individualmente:
 
-Compilar con: g++ taller1.cpp -o t1 `pkg-config --cflags --libs opencv`
+Compilar con: g++ taller1.cpp -o t1 \`pkg-config --cflags --libs opencv\`
 
 Correr con: ./t1 4k.jpg 4ksobel.jpg
 
