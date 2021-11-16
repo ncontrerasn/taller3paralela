@@ -1,0 +1,4 @@
+Imagen: 4k.jpg - Tiempo: 6.282507 s
+Imagen: 4k.jpg - Tiempo: 6.189401 s
+Imagen: 4k.jpg - Tiempo: 6.109036 s
+Imagen: 4k.jpg - Tiempo: 7.171292 s
