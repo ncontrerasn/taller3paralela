@@ -1,10 +1,10 @@
-# Taller 1 Parelela
+# Taller 2 Parelela
 
 ## Para probar individualmente:
 
 Compilar con: g++ taller1.cpp -o t1 \`pkg-config --cflags --libs opencv\`
 
-Correr con: ./t1 4k.jpg 4ksobel.jpg
+Correr con: ./t1 4k.jpg 4ksobel.jpg 4
 
 ## Para correr todo con el script:
 
