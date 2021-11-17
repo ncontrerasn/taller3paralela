@@ -2,9 +2,9 @@
 
 ## Para probar individualmente:
 
-Compilar con: g++ taller1.cpp -o t1 \`pkg-config --cflags --libs opencv\`
+Compilar con: g++ taller2.cpp -o t2 \`pkg-config --cflags --libs opencv\`
 
-Correr con: ./t1 4k.jpg 4ksobel.jpg 4
+Correr con: ./t2 4k.jpg 4ksobel.jpg 4
 
 ## Para correr todo con el script:
 
