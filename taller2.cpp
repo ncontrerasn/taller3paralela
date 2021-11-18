@@ -75,6 +75,8 @@ int main(int argc, char *argv[])
     //Establecemos las variables de tiempo para las mediciones respectivas
     struct timeval tval_before, tval_after, tval_result;
     gettimeofday(&tval_before, NULL);
+    
+    int numThreads = argv[3];
 
     //Se carga la imagen original como una imagen a color
     imgOrig = imread(argv[1], IMREAD_COLOR);
