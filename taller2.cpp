@@ -2,6 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include <sys/time.h>
+#include <omp.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -13,11 +14,9 @@ using std::ofstream;
 //Se encarga de realiza el algoritmo de sobel a la imagen
 void noBorderProcessing(Mat imgGray, Mat imgSobel, float **Kernel, float **Kernel2)
 {
-    float sum;
-    float sum2;
-    float fsum;
     //Se recorre la imagen completa exclugendo los pixeles borde para que la
     //operacion de convolucion siguiente puede hacerse sin padding
+    #pragma omp parallel for collapse(2)
     for (int y = 1; y < imgGray.rows - 1; y++)
     {
         for (int x = 1; x < imgGray.cols - 1; x++)
@@ -25,9 +24,9 @@ void noBorderProcessing(Mat imgGray, Mat imgSobel, float **Kernel, float **Kerne
             //Se debe realizar la operacion por cada uno de los colores RGB que se encuentran en cada pixel
             for (int f = 0; f < 3; f++)
             {
-                sum = 0.0;
-                sum2 = 0.0;
-                fsum = 0.0;
+                float sum = 0.0;
+                float sum2 = 0.0;
+                float fsum = 0.0;
                 //Se establece con estos dos fors la operacion de convolucion entre la matriz de la imagen y los kernels
                 for (int k = -1; k <= 1; k++)
                 {
@@ -50,14 +49,14 @@ void noBorderProcessing(Mat imgGray, Mat imgSobel, float **Kernel, float **Kerne
 //la version en escala de grises de la otra
 void greyscaleProcessing(Mat imgOrig, Mat imgGray)
 {
-    float gray = 0.0;
     //Se recorre toda la imagen original
+    #pragma omp parallel for collapse(2)
     for (int y = 0; y < imgOrig.rows; y++)
     {
         for (int x = 0; x < imgOrig.cols; x++)
         {
             //por cada posicion se realiza la siguiente operacion de pesos
-            gray = imgOrig.at<Vec3b>(y, x)[0] * 0.114 + imgOrig.at<Vec3b>(y, x)[1] * 0.587 + imgOrig.at<Vec3b>(y, x)[2] * 0.299;
+            float gray = imgOrig.at<Vec3b>(y, x)[0] * 0.114 + imgOrig.at<Vec3b>(y, x)[1] * 0.587 + imgOrig.at<Vec3b>(y, x)[2] * 0.299;
             //El resultado se aplica a cada seccion RGB del pixel, para que se obtenga un gris acorde en ese punto
             imgGray.at<Vec3b>(y, x)[0] = gray;
             imgGray.at<Vec3b>(y, x)[1] = gray;
@@ -76,7 +75,9 @@ int main(int argc, char *argv[])
     struct timeval tval_before, tval_after, tval_result;
     gettimeofday(&tval_before, NULL);
     
-    int numThreads = argv[3];
+    int numThreads = atoi(argv[3]);
+    printf("%d\n",numThreads);
+    omp_set_num_threads(numThreads);
 
     //Se carga la imagen original como una imagen a color
     imgOrig = imread(argv[1], IMREAD_COLOR);
@@ -93,6 +94,7 @@ int main(int argc, char *argv[])
     //Se hace llamado al metodo encargado de pasar la imagen original a escala de grises
     //como paso fundamental antes de aplicar sobel
     greyscaleProcessing(imgOrig, imgGray);
+    #pragma omp barrier
 
     //nombre de la imagen en escala de grises
     string string1(argv[1]);
@@ -140,6 +142,7 @@ int main(int argc, char *argv[])
 
     //Se llama a la funcion que realiza el procedimiento para hallar sobel
     noBorderProcessing(imgGray, imgSobel, Kernel, Kernel2);
+    #pragma omp barrier
 
     for (int i = 0; i < 3; i++){
         free(Kernel[i]);
@@ -162,14 +165,16 @@ int main(int argc, char *argv[])
     myfile << "Tiempo: " << tval_result.tv_sec << "." << tval_result.tv_usec << " s\n";
     myfile.close();
 
-    //mostrar las imagenes de entrada y salida
+    printf("%ld.%ld \n",tval_result.tv_sec,tval_result.tv_usec);
+
+    /*//mostrar las imagenes de entrada y salida
     namedWindow("final");
     imshow("final", imgSobel);
 
     namedWindow("initial");
     imshow("initial", imgOrig);
 
-    waitKey();
+    waitKey();*/
 
     return 0;
 }

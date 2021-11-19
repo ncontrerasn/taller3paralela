@@ -2,3 +2,14 @@ Imagen: 4k.jpg - Tiempo: 6.282507 s
 Imagen: 4k.jpg - Tiempo: 6.189401 s
 Imagen: 4k.jpg - Tiempo: 6.109036 s
 Imagen: 4k.jpg - Tiempo: 7.171292 s
+Imagen: 4k.jpg - Tiempo: 3.761699 s
+Imagen: 4k.jpg - Tiempo: 3.472870 s
+Imagen: 4k.jpg - Tiempo: 6.352199 s
+Imagen: 4k.jpg - Tiempo: 4.106524 s
+Imagen: 4k.jpg - Tiempo: 3.582089 s
+Imagen: 4k.jpg - Tiempo: 6.640544 s
+Imagen: 4k.jpg - Tiempo: 3.884106 s
+Imagen: 4k.jpg - Tiempo: 3.565318 s
+Imagen: 4k.jpg - Tiempo: 3.666168 s
+Imagen: 4k.jpg - Tiempo: 3.536657 s
+Imagen: 4k.jpg - Tiempo: 3.576269 s
