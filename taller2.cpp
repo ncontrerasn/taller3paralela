@@ -162,7 +162,8 @@ int main(int argc, char *argv[])
     ofstream myfile;
     myfile.open("tiempos.txt", std::ios_base::app);
     myfile << "Imagen: " << argv[1] << " - ";
-    myfile << "Tiempo: " << tval_result.tv_sec << "." << tval_result.tv_usec << " s\n";
+    myfile << "Tiempo: " << tval_result.tv_sec << "." << tval_result.tv_usec << " s - ";
+     myfile << "Hilos: " << numThreads << "\n";
     myfile.close();
 
     printf("%ld.%ld \n",tval_result.tv_sec,tval_result.tv_usec);
