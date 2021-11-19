@@ -1,6 +1,6 @@
 #!/bin/bash
 
-g++ taller2.cpp -o t2 `pkg-config --cflags --libs opencv`
+g++ taller2.cpp -o t2 -fopenmp `pkg-config --cflags --libs opencv` 
 
 ./t2 720p.jpg 720psobel.jpg 2
 ./t2 720p.jpg 720psobel.jpg 4

@@ -2,7 +2,7 @@
 
 ## Para probar individualmente:
 
-Compilar con: g++ taller2.cpp -o t2 \`pkg-config --cflags --libs opencv\`
+Compilar con: g++ taller2.cpp -o t2 -fopenmp \`pkg-config --cflags --libs opencv\` 
 
 Correr con: ./t2 4k.jpg 4ksobel.jpg 4
 
