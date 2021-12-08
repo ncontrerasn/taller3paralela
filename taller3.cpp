@@ -16,7 +16,8 @@ void noBorderProcessing(Mat imgGray, Mat imgSobel, float **Kernel, float **Kerne
 {
     //Se recorre la imagen completa exclugendo los pixeles borde para que la
     //operacion de convolucion siguiente puede hacerse sin padding
-    #pragma omp parallel for collapse(2)
+
+    //#pragma omp parallel for collapse(2)
     for (int y = 1; y < imgGray.rows - 1; y++)
     {
         for (int x = 1; x < imgGray.cols - 1; x++)
@@ -50,7 +51,9 @@ void noBorderProcessing(Mat imgGray, Mat imgSobel, float **Kernel, float **Kerne
 void greyscaleProcessing(Mat imgOrig, Mat imgGray)
 {
     //Se recorre toda la imagen original
-    #pragma omp parallel for collapse(2)
+
+    //#pragma omp parallel for collapse(2)
+
     for (int y = 0; y < imgOrig.rows; y++)
     {
         for (int x = 0; x < imgOrig.cols; x++)
@@ -65,19 +68,72 @@ void greyscaleProcessing(Mat imgOrig, Mat imgGray)
     }
 }
 
+//aca no es necesario pasarlas de a 3 pff jaja. esto seria para sobel
+__global__ void gray(Mat *imgOrig, Mat *imgGray){
+    __shared__ (tipo de dato Vec3b, creo) lineasOrig[3 * imgOrig.cols * sizeof(un lemento de Mat)];
+    __shared__ lineasGray[3 * imgOrig.cols * sizeof(un lemento de Mat)];
+
+    int z = 0;
+
+    //copiar las 3 filas de la original y gris en memoria compartida
+    //para saber cuales 3 filas copiar, hay que saber el id del bloque
+    for (int y = 0; y < 3; y++)
+    {
+        for (int x = 0; x < imgOrig.cols; x++)
+        {
+            lineasOrig[z] = imgOrig.at<Vec3b>(y, x)[x + blockIdx.x * imgOrig.cols];//me perdi a
+            lineasGary[z] = imgGray[x + blockIdx.x * imgGray.cols];          
+        }
+        z++;
+    }
+
+    for (int x = 0; x < lineasOrig.size; x++)
+    {
+        //por cada posicion se realiza la siguiente operacion de pesos
+        //aplicar el efecto pero ya no es y,x sino solo x
+        float gray = lineasOrig.at<Vec3b>(x)[0] * 0.114 + lineasOrig.at<Vec3b>(x)[1] * 0.587 + lineasOrig.at<Vec3b>(x)[2] * 0.299;
+        //El resultado se aplica a cada seccion RGB del pixel, para que se obtenga un gris acorde en ese punto
+        lineasGray.at<Vec3b>(x)[0] = gray;
+        lineasGray.at<Vec3b>(x)[1] = gray;
+        lineasGray.at<Vec3b>(x)[2] = gray;
+    }
+    //pasar los de las 3 lineas a la memoria general? o saltarse esto y hacer el paso anterior directo
+    //a la memoria general
+
+    for (int x = 0; x < lineasOrig.size; x++)
+    {
+        imgGray[x + blockIdx.x * imgGray.cols];
+        lineasGray.at<Vec3b>(x)[0] = gray;
+        lineasGray.at<Vec3b>(x)[1] = gray;
+        lineasGray.at<Vec3b>(x)[2] = gray;
+    }
+    
+}
+
 int main(int argc, char *argv[])
 {
+    //son constantes para cuaquier tamaño de imagen?
+    int bloques = 1, hilos = 1;
     //Definimos el conjunto de variables que utilizaremos para manejar las imagenes
     //Esto gracias al tipo de dato Mat que permite manejar la imagen como un objeto con atributos
     Mat imgOrig, imgSobel, imgGray;
+    Mat *d_imgOrig, *d_imgSobel, *d_imgGray;
+
+    size = sizeof(Mat);
+
+    cudaMalloc((void **) &d_imgOrig, size);
+    cudaMalloc((void **) &d_imgSobel, size);
+    cudaMalloc((void **) &d_imgGray, size);
 
     //Establecemos las variables de tiempo para las mediciones respectivas
     struct timeval tval_before, tval_after, tval_result;
     gettimeofday(&tval_before, NULL);
     
+    /*
     int numThreads = atoi(argv[3]);
     printf("%d\n",numThreads);
     omp_set_num_threads(numThreads);
+    */
 
     //Se carga la imagen original como una imagen a color
     imgOrig = imread(argv[1], IMREAD_COLOR);
@@ -91,10 +147,24 @@ int main(int argc, char *argv[])
     //Se hace una copia de la imagen original para luego pasarla a escala de grises
     imgGray = imgOrig.clone();
 
+    cudaMemcpy(d_imgOrig, &imgOrig, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_imgGray, &imgGray, size, cudaMemcpyHostToDevice);
+
     //Se hace llamado al metodo encargado de pasar la imagen original a escala de grises
     //como paso fundamental antes de aplicar sobel
-    greyscaleProcessing(imgOrig, imgGray);
-    #pragma omp barrier
+    
+    //greyscaleProcessing(imgOrig, imgGray);
+
+    gray<<bloques, hilos>>(d_imgOrig, d_imgGray);
+
+    cudaMemcpy(&imgGray, d_imgGray, size, cudaMemcpyDeviceToHost);
+
+    //al final 
+    cudaFree(d_imgOrig);
+    cudaFree(d_imgGray);
+    cudaFree(d_imgSobel);
+    
+    //#pragma omp barrier
 
     //nombre de la imagen en escala de grises
     string string1(argv[1]);
@@ -142,7 +212,8 @@ int main(int argc, char *argv[])
 
     //Se llama a la funcion que realiza el procedimiento para hallar sobel
     noBorderProcessing(imgGray, imgSobel, Kernel, Kernel2);
-    #pragma omp barrier
+
+    //#pragma omp barrier
 
     for (int i = 0; i < 3; i++){
         free(Kernel[i]);
