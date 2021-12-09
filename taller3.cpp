@@ -6,6 +6,10 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <stdio.h>
+#include <string>
+#include <math.h>
+#include <opencv2/core/core.hpp>
 
 using namespace std;
 using namespace cv;
@@ -69,72 +73,47 @@ void greyscaleProcessing(Mat imgOrig, Mat imgGray)
 }
 
 //aca no es necesario pasarlas de a 3 pff jaja. esto seria para sobel
-__global__ void gray(Mat *imgOrig, Mat *imgGray){
-    __shared__ (tipo de dato Vec3b, creo) lineasOrig[3 * imgOrig.cols * sizeof(un lemento de Mat)];
-    __shared__ lineasGray[3 * imgOrig.cols * sizeof(un lemento de Mat)];
+__global__ void gray(unsigned char *d_imgOrig, unsigned char *d_imgGray, int rows, int numberElements){
 
-    int z = 0;
+    int yOffset;
+    int i, x;
 
-    //copiar las 3 filas de la original y gris en memoria compartida
-    //para saber cuales 3 filas copiar, hay que saber el id del bloque
-    for (int y = 0; y < 3; y++)
+    int y = (blockDim.x * blockIdx.x + threadIdx.x)*3;
+
+    yOffset = y * rows;
+    if (y < numElements)
     {
-        for (int x = 0; x < imgOrig.cols; x++)
-        {
-            lineasOrig[z] = imgOrig.at<Vec3b>(y, x)[x + blockIdx.x * imgOrig.cols];//me perdi a
-            lineasGary[z] = imgGray[x + blockIdx.x * imgGray.cols];          
-        }
-        z++;
-    }
-
-    for (int x = 0; x < lineasOrig.size; x++)
-    {
-        //por cada posicion se realiza la siguiente operacion de pesos
-        //aplicar el efecto pero ya no es y,x sino solo x
-        float gray = lineasOrig.at<Vec3b>(x)[0] * 0.114 + lineasOrig.at<Vec3b>(x)[1] * 0.587 + lineasOrig.at<Vec3b>(x)[2] * 0.299;
-        //El resultado se aplica a cada seccion RGB del pixel, para que se obtenga un gris acorde en ese punto
-        lineasGray.at<Vec3b>(x)[0] = gray;
-        lineasGray.at<Vec3b>(x)[1] = gray;
-        lineasGray.at<Vec3b>(x)[2] = gray;
-    }
-    //pasar los de las 3 lineas a la memoria general? o saltarse esto y hacer el paso anterior directo
-    //a la memoria general
-
-    for (int x = 0; x < lineasOrig.size; x++)
-    {
-        imgGray[x + blockIdx.x * imgGray.cols];
-        lineasGray.at<Vec3b>(x)[0] = gray;
-        lineasGray.at<Vec3b>(x)[1] = gray;
-        lineasGray.at<Vec3b>(x)[2] = gray;
+        for(x = 0; x < rows; x++)
+        {   
+        unsigned char r = d_imgOrig[yOffset + x + 0];
+	    unsigned char g = d_imgOrig[yOffset + x + 1];
+	    unsigned char b = d_imgOrig[yOffset + x + 2];
+	
+	    d_imgGray[yOffset + x] = r * 0.299f + g * 0.587f + b * 0.114f;
+        } 
     }
     
 }
 
 int main(int argc, char *argv[])
 {
+    //-----------------------------------Variables------------------------------------//
+    //errores de cuda
+    cudaError_t err = cudaSuccess;
     //son constantes para cuaquier tamaño de imagen?
-    int bloques = 1, hilos = 1;
+    int blocksPerGrid, threadsPerBlock;
+    blocksPerGrid = 30;
+    threadsPerBlock = 256/blocksPerGrid;
     //Definimos el conjunto de variables que utilizaremos para manejar las imagenes
     //Esto gracias al tipo de dato Mat que permite manejar la imagen como un objeto con atributos
     Mat imgOrig, imgSobel, imgGray;
-    Mat *d_imgOrig, *d_imgSobel, *d_imgGray;
+    unsigned char *h_imgOrig, *h_imgSobel, *h_imgGray;
+    unsigned char *d_imgOrig, *d_imgSobel, *d_imgGray;
+    int rows; //number of rows of pixels
+	int cols; //number of columns of pixels
+    //--------------------------------------------------------------------------------//
 
-    size = sizeof(Mat);
-
-    cudaMalloc((void **) &d_imgOrig, size);
-    cudaMalloc((void **) &d_imgSobel, size);
-    cudaMalloc((void **) &d_imgGray, size);
-
-    //Establecemos las variables de tiempo para las mediciones respectivas
-    struct timeval tval_before, tval_after, tval_result;
-    gettimeofday(&tval_before, NULL);
-    
-    /*
-    int numThreads = atoi(argv[3]);
-    printf("%d\n",numThreads);
-    omp_set_num_threads(numThreads);
-    */
-
+    //-----------------------------------Lectura imagen------------------------------------//
     //Se carga la imagen original como una imagen a color
     imgOrig = imread(argv[1], IMREAD_COLOR);
 
@@ -146,34 +125,130 @@ int main(int argc, char *argv[])
 
     //Se hace una copia de la imagen original para luego pasarla a escala de grises
     imgGray = imgOrig.clone();
+    //--------------------------------------------------------------------------------//
 
-    cudaMemcpy(d_imgOrig, &imgOrig, size, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_imgGray, &imgGray, size, cudaMemcpyHostToDevice);
+    //-----------------------------------Malloc------------------------------------//
+    *rows = imgOrig.rows;
+	*cols = imgOrig.cols;
 
+    h_imgOrig = (unsigned char*) malloc(*rows * *cols * sizeof(unsigned char) * 3);
+    unsigned char* rgb_image = (unsigned char*)imgOrig.data;
+
+	//populate host's rgb data array
+	int x = 0;
+	for (x = 0; x < *rows * *cols * 3; x++)
+	{
+		h_imgOrig[x] = rgb_image[x];
+	}
+	
+	size_t numElements = imgOrig.rows * imgOrig.cols;
+
+    h_imgSobel = (unsigned char*) malloc(*rows * *cols * sizeof(unsigned char) * 3);
+    h_imgGray = (unsigned char*) malloc(*rows * *cols * sizeof(unsigned char) * 3);
+    //--------------------------------------------------------------------------------//
+
+    //-----------------------------------CudaMalloc------------------------------------//
+
+    err = cudaMalloc((void **) &d_imgOrig, sizeof(unsigned char) * numElements * 3);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to allocate device vector imgOrig (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+
+    err = cudaMalloc((void **) &d_imgSobel, sizeof(unsigned char) * numElements);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to allocate device vector vector imgSobel (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    err = cudaMemset(d_imgSobel, 0, sizeof(unsigned char) * numElements);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to set memory device vector imgSobel (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+
+    err = cudaMalloc((void **) &d_imgGray, sizeof(unsigned char) * numElements);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to allocate device vector imgGray (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    err = cudaMemset(d_imgGray, 0, sizeof(unsigned char) * numElements);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to set memory device vector imgGray (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    //--------------------------------------------------------------------------------//
+
+    //-----------------------------------Tiempo------------------------------------//
+    //Establecemos las variables de tiempo para las mediciones respectivas
+    struct timeval tval_before, tval_after, tval_result;
+    gettimeofday(&tval_before, NULL);
+    //--------------------------------------------------------------------------------//
+
+    //-----------------------------------CudaMemcpy------------------------------------//
+    err = cudaMemcpy(d_imgOrig, h_imgOrig, sizeof(unsigned char) * numElements * 3, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to copy vector imgOrig from host to device (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    //--------------------------------------------------------------------------------//
+
+    //-----------------------------------__Global__------------------------------------//
     //Se hace llamado al metodo encargado de pasar la imagen original a escala de grises
     //como paso fundamental antes de aplicar sobel
     
     //greyscaleProcessing(imgOrig, imgGray);
 
-    gray<<bloques, hilos>>(d_imgOrig, d_imgGray);
+    gray<<blocksPerGrid, threadsPerBlock>>(d_imgOrig, d_imgGray, rows, numElements);
+    //--------------------------------------------------------------------------------//
 
-    cudaMemcpy(&imgGray, d_imgGray, size, cudaMemcpyDeviceToHost);
+    //-----------------------------------CudaMemcpy - Results------------------------------------//
+    err = cudaMemcpy(h_imgGray, d_imgGray, sizeof(unsigned char) * numElements, cudaMemcpyDeviceToHost);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to copy vector imgGray from device to host (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    //--------------------------------------------------------------------------------//
 
+    //-----------------------------------CudaFree------------------------------------//
     //al final 
-    cudaFree(d_imgOrig);
-    cudaFree(d_imgGray);
-    cudaFree(d_imgSobel);
-    
-    //#pragma omp barrier
+    err = cudaFree(d_imgOrig);
+    {
+        fprintf(stderr, "Failed to free device vector A (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    err =cudaFree(d_imgGray);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to free device vector B (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    err =cudaFree(d_imgSobel);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to free device vector B (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    //--------------------------------------------------------------------------------//
 
+    //-----------------------------------WriteGreyImg------------------------------------//
     //nombre de la imagen en escala de grises
     string string1(argv[1]);
     string1 = string1.substr(0, string1.size() - 4);
     string1 += "grayscale.png";
 
-    //Se guarda la imagen en escala de grises
-    imwrite(string1, imgGray);
+    Mat greyData(rows, cols, CV_8UC1,(void *) h_imgGray);
+	//Se guarda la imagen en escala de grises
+	imwrite(string1, greyData);
+    //--------------------------------------------------------------------------------//
 
+    /*
     //Se definen los kernels para la operacion de sobel
     //uno que identifique los bordes verticales y uno para bordes horizontales
     float **Kernel;
@@ -224,7 +299,9 @@ int main(int argc, char *argv[])
 
     //Se guarda la imagen correspondiente a sobel
     imwrite(argv[2], imgSobel);
+    */
 
+    //-----------------------------------Tiempo - Final------------------------------------//
     //Se finaliza el registro del tiempo
     gettimeofday(&tval_after, NULL);
     timersub(&tval_after, &tval_before, &tval_result);
@@ -234,19 +311,11 @@ int main(int argc, char *argv[])
     myfile.open("tiempos.txt", std::ios_base::app);
     myfile << "Imagen: " << argv[1] << " - ";
     myfile << "Tiempo: " << tval_result.tv_sec << "." << tval_result.tv_usec << " s - ";
-     myfile << "Hilos: " << numThreads << "\n";
+    myfile << "Hilos: " << numThreads << "\n";
     myfile.close();
 
     printf("%ld.%ld \n",tval_result.tv_sec,tval_result.tv_usec);
-
-    /*//mostrar las imagenes de entrada y salida
-    namedWindow("final");
-    imshow("final", imgSobel);
-
-    namedWindow("initial");
-    imshow("initial", imgOrig);
-
-    waitKey();*/
+    //---------------------------------------------------------------------------------//
 
     return 0;
 }
