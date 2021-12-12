@@ -78,7 +78,7 @@ __global__ void gray(unsigned char *d_imgOrig, unsigned char *d_imgGray, int row
     int yOffset;
     int x;
 
-    int y = (blockDim.x * blockIdx.x + threadIdx.x)*3;
+    int y = (blockDim.x * blockIdx.x + threadIdx.x);
 
     yOffset = y * rows;
     if (y < numberElements)
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
     threadsPerBlock = 256/blocksPerGrid;
     //Definimos el conjunto de variables que utilizaremos para manejar las imagenes
     //Esto gracias al tipo de dato Mat que permite manejar la imagen como un objeto con atributos
-    Mat imgOrig, imgSobel, imgGray;
+    Mat imgOrig, imgSobel;
     unsigned char *h_imgOrig, *h_imgSobel, *h_imgGray;
     unsigned char *d_imgOrig, *d_imgSobel, *d_imgGray;
     int rows; //number of rows of pixels
@@ -123,8 +123,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    //Se hace una copia de la imagen original para luego pasarla a escala de grises
-    imgGray = imgOrig.clone();
     //--------------------------------------------------------------------------------//
 
     //-----------------------------------Malloc------------------------------------//
@@ -143,28 +141,24 @@ int main(int argc, char *argv[])
 	
 	size_t numElements = imgOrig.rows * imgOrig.cols;
 
-    Mat TESTdata = Mat(rows, cols,CV_8UC1,(void *) h_imgOrig);
-	//Se guarda la imagen en escala de grises
-	imwrite("TEST.jpg", TESTdata);
-    
-    Mat TESTdata2 = Mat(rows, cols,CV_8UC1,(void *) rgb_image);
-	//Se guarda la imagen en escala de grises
-	imwrite("TEST2.jpg", TESTdata2);
+    cv::Mat testData(rows, cols, CV_8UC3,(void *) h_imgOrig);
+	//write Mat object to file
+	cv::imwrite("TEST.jpg", testData);
 
-    h_imgSobel = (unsigned char*) malloc(rows * cols * sizeof(unsigned char) * 3);
-    h_imgGray = (unsigned char*) malloc(rows * cols * sizeof(unsigned char) * 3);
+    h_imgSobel = (unsigned char*) malloc(rows * cols * sizeof(unsigned char*));
+    h_imgGray = (unsigned char*) malloc(rows * cols * sizeof(unsigned char*));
     //--------------------------------------------------------------------------------//
 
     //-----------------------------------CudaMalloc------------------------------------//
 
-    err = cudaMalloc((void **) &d_imgOrig, sizeof(unsigned char) * numElements * 3);
+    err = cudaMalloc(&d_imgOrig, sizeof(unsigned char) * numElements * 3);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate device vector imgOrig (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMalloc((void **) &d_imgSobel, sizeof(unsigned char) * numElements);
+    err = cudaMalloc(&d_imgSobel, sizeof(unsigned char) * numElements);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate device vector vector imgSobel (error code %s)!\n", cudaGetErrorString(err));
@@ -177,7 +171,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMalloc((void **) &d_imgGray, sizeof(unsigned char) * numElements);
+    err = cudaMalloc(&d_imgGray, sizeof(unsigned char) * numElements);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate device vector imgGray (error code %s)!\n", cudaGetErrorString(err));
@@ -252,9 +246,9 @@ int main(int argc, char *argv[])
     string1 = string1.substr(0, string1.size() - 4);
     string1 += "grayscale.png";
 
-    Mat greyData = Mat(rows, cols,CV_8UC1,(void *) h_imgGray);
-	//Se guarda la imagen en escala de grises
-	imwrite(string1, greyData);
+    cv::Mat greyData(rows, cols, CV_8UC1,(void *) h_imgGray);
+	//write Mat object to file
+	cv::imwrite(string1, greyData);
     //--------------------------------------------------------------------------------//
 
     /*
@@ -269,7 +263,6 @@ int main(int argc, char *argv[])
         Kernel[i] = (float *)malloc(3 * sizeof(float));
         Kernel2[i] = (float *)malloc(3 * sizeof(float));
     }
-
     Kernel[0][0] = -1;
     Kernel[0][1] = 0;
     Kernel[0][2] = 1;
@@ -279,7 +272,6 @@ int main(int argc, char *argv[])
     Kernel[2][0] = -1;
     Kernel[2][1] = 0;
     Kernel[2][2] = 1;
-
     Kernel2[0][0] = -1;
     Kernel2[0][1] = -2;
     Kernel2[0][2] = -1;
@@ -289,23 +281,18 @@ int main(int argc, char *argv[])
     Kernel2[2][0] = 1;
     Kernel2[2][1] = 2;
     Kernel2[2][2] = 1;
-
     //Se vuelve a hacer una copia, en este caso, para tener una imagen donde registrar el sobel
     //utilizar la misma variable ocacionaria errores en el procedimiento de sobel
     imgSobel = imgGray.clone();
-
     //Se llama a la funcion que realiza el procedimiento para hallar sobel
     noBorderProcessing(imgGray, imgSobel, Kernel, Kernel2);
-
     //#pragma omp barrier
-
     for (int i = 0; i < 3; i++){
         free(Kernel[i]);
         free(Kernel2[i]);
     }
     free(Kernel);
     free(Kernel2);
-
     //Se guarda la imagen correspondiente a sobel
     imwrite(argv[2], imgSobel);
     */
