@@ -13,3 +13,5 @@ Correr con: ./t3 4k.jpg 4ksobel.jpg 4 128
 Dar permiso al script con: chmod 755 script_ejecutar_todo.sh 
 
 Ejecutar con: ./script_ejecutar_todo.sh
+
+excel de drive https://docs.google.com/spreadsheets/d/1hYKXUEs_YpCjBruuB8rQhmu1GaU7CuX6xN1bNXZJ5YI/edit#gid=69986341
