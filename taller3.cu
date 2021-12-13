@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
 
     //-----------------------------------WriteGreyImg------------------------------------//
     //nombre de la imagen en escala de grises
-    string string1((argv[1]);
+    string string1((argv[1]));
     string1 = string1.substr(0, string1.size() - 4);
     string1 += "grayscale.png";
 
