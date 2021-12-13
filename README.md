@@ -1,15 +1,15 @@
-# Taller 2 Parelela
+# Taller 3 Parelela
 
 ## Para probar individualmente:
 
-Compilar con: g++ taller2.cpp -o t2 -fopenmp \`pkg-config --cflags --libs opencv\` 
+Compilar con: nvcc taller3.cu -o t3 -fopenmp \`pkg-config --cflags --libs opencv\` 
 
-Correr con: ./t2 4k.jpg 4ksobel.jpg 4
+Correr con: ./t3 4k.jpg 4ksobel.jpg 2 6
+
+**Nota:** los parámetros son: nombre de la imagen de entrada, número de bloques y número de hilos por bloque.
 
 ## Para correr todo con el script:
 
 Dar permiso al script con: chmod 755 script_ejecutar_todo.sh 
 
-Ejecutarlo con: ./script_ejecutar_todo.sh
-
-**Nota:** para que el script siga con la ejecuciòn de otro caso, hay que cerrar las 2 ventanas que muestran las imàgenes
+Ejecutar con: ./script_ejecutar_todo.sh
