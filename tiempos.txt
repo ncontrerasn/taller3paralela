@@ -1,15 +1,80 @@
-Imagen: 4k.jpg - Tiempo: 6.282507 s
-Imagen: 4k.jpg - Tiempo: 6.189401 s
-Imagen: 4k.jpg - Tiempo: 6.109036 s
-Imagen: 4k.jpg - Tiempo: 7.171292 s
-Imagen: 4k.jpg - Tiempo: 3.761699 s
-Imagen: 4k.jpg - Tiempo: 3.472870 s
-Imagen: 4k.jpg - Tiempo: 6.352199 s
-Imagen: 4k.jpg - Tiempo: 4.106524 s
-Imagen: 4k.jpg - Tiempo: 3.582089 s
-Imagen: 4k.jpg - Tiempo: 6.640544 s
-Imagen: 4k.jpg - Tiempo: 3.884106 s
-Imagen: 4k.jpg - Tiempo: 3.565318 s
-Imagen: 4k.jpg - Tiempo: 3.666168 s
-Imagen: 4k.jpg - Tiempo: 3.536657 s
-Imagen: 4k.jpg - Tiempo: 3.576269 s
+Imagen: 1080p.jpg - Tiempo: 0.177227 s - Bloques: 1 - Hilos por bloque: 32
+Imagen: 1080p.jpg - Tiempo: 0.143445 s - Bloques: 1 - Hilos por bloque: 64
+Imagen: 1080p.jpg - Tiempo: 0.128954 s - Bloques: 1 - Hilos por bloque: 128
+Imagen: 1080p.jpg - Tiempo: 0.90326 s - Bloques: 12 - Hilos por bloque: 64
+Imagen: 1080p.jpg - Tiempo: 0.86323 s - Bloques: 12 - Hilos por bloque: 128
+Imagen: 1080p.jpg - Tiempo: 0.88542 s - Bloques: 24 - Hilos por bloque: 128
+Imagen: 1080p.jpg - Tiempo: 0.108884 s - Bloques: 48 - Hilos por bloque: 128
+Imagen: 1080p.jpg - Tiempo: 0.137217 s - Bloques: 1 - Hilos por bloque: 256
+Imagen: 720p.jpg - Tiempo: 0.98629 s - Bloques: 1 - Hilos por bloque: 32
+Imagen: 720p.jpg - Tiempo: 0.74495 s - Bloques: 1 - Hilos por bloque: 64
+Imagen: 720p.jpg - Tiempo: 0.68639 s - Bloques: 1 - Hilos por bloque: 128
+Imagen: 720p.jpg - Tiempo: 0.64547 s - Bloques: 3 - Hilos por bloque: 32
+Imagen: 720p.jpg - Tiempo: 0.59094 s - Bloques: 3 - Hilos por bloque: 64
+Imagen: 720p.jpg - Tiempo: 0.54663 s - Bloques: 3 - Hilos por bloque: 128
+Imagen: 720p.jpg - Tiempo: 0.54243 s - Bloques: 6 - Hilos por bloque: 32
+Imagen: 720p.jpg - Tiempo: 0.51992 s - Bloques: 6 - Hilos por bloque: 64
+Imagen: 720p.jpg - Tiempo: 0.49848 s - Bloques: 6 - Hilos por bloque: 128
+Imagen: 720p.jpg - Tiempo: 0.50165 s - Bloques: 12 - Hilos por bloque: 32
+Imagen: 720p.jpg - Tiempo: 0.51570 s - Bloques: 12 - Hilos por bloque: 64
+Imagen: 720p.jpg - Tiempo: 0.48434 s - Bloques: 12 - Hilos por bloque: 128
+Imagen: 720p.jpg - Tiempo: 0.50807 s - Bloques: 240 - Hilos por bloque: 32
+Imagen: 720p.jpg - Tiempo: 0.108264 s - Bloques: 1 - Hilos por bloque: 16
+Imagen: 720p.jpg - Tiempo: 0.132862 s - Bloques: 1 - Hilos por bloque: 8
+Imagen: 720p.jpg - Tiempo: 0.109669 s - Bloques: 1 - Hilos por bloque: 20
+Imagen: 720p.jpg - Tiempo: 0.119542 s - Bloques: 1 - Hilos por bloque: 17
+Imagen: 720p.jpg - Tiempo: 0.104403 s - Bloques: 1 - Hilos por bloque: 18
+Imagen: 720p.jpg - Tiempo: 0.126759 s - Bloques: 1 - Hilos por bloque: 14
+Imagen: 1080p.jpg - Tiempo: 0.153585 s - Bloques: 2 - Hilos por bloque: 16
+Imagen: 1080p.jpg - Tiempo: 0.115338 s - Bloques: 2 - Hilos por bloque: 64
+Imagen: 1080p.jpg - Tiempo: 0.107783 s - Bloques: 2 - Hilos por bloque: 128
+Imagen: 1080p.jpg - Tiempo: 0.102860 s - Bloques: 3 - Hilos por bloque: 64
+Imagen: 1080p.jpg - Tiempo: 0.101180 s - Bloques: 3 - Hilos por bloque: 128
+Imagen: 1080p.jpg - Tiempo: 0.99508 s - Bloques: 4 - Hilos por bloque: 64
+Imagen: 1080p.jpg - Tiempo: 0.95281 s - Bloques: 4 - Hilos por bloque: 128
+Imagen: 1080p.jpg - Tiempo: 0.99990 s - Bloques: 3 - Hilos por bloque: 256
+Imagen: 1080p.jpg - Tiempo: 0.99640 s - Bloques: 3 - Hilos por bloque: 128
+Imagen: 1080p.jpg - Tiempo: 0.100945 s - Bloques: 3 - Hilos por bloque: 128
+Imagen: 720p.jpg - Tiempo: 0.61419 s - Bloques: 2 - Hilos por bloque: 64
+Imagen: 4k.jpg - Tiempo: 0.941569 s - Bloques: 1 - Hilos por bloque: 16
+Imagen: 4k.jpg - Tiempo: 0.884147 s - Bloques: 1 - Hilos por bloque: 32
+Imagen: 4k.jpg - Tiempo: 0.768352 s - Bloques: 1 - Hilos por bloque: 64
+Imagen: 4k.jpg - Tiempo: 0.737279 s - Bloques: 1 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.785368 s - Bloques: 1 - Hilos por bloque: 256
+Imagen: 4k.jpg - Tiempo: 0.741795 s - Bloques: 2 - Hilos por bloque: 16
+Imagen: 4k.jpg - Tiempo: 0.700484 s - Bloques: 2 - Hilos por bloque: 32
+Imagen: 4k.jpg - Tiempo: 0.612820 s - Bloques: 2 - Hilos por bloque: 64
+Imagen: 4k.jpg - Tiempo: 0.613056 s - Bloques: 2 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.646257 s - Bloques: 2 - Hilos por bloque: 256
+Imagen: 4k.jpg - Tiempo: 0.663270 s - Bloques: 3 - Hilos por bloque: 16
+Imagen: 4k.jpg - Tiempo: 0.633416 s - Bloques: 3 - Hilos por bloque: 32
+Imagen: 4k.jpg - Tiempo: 0.580120 s - Bloques: 3 - Hilos por bloque: 64
+Imagen: 4k.jpg - Tiempo: 0.577456 s - Bloques: 3 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.586929 s - Bloques: 3 - Hilos por bloque: 256
+Imagen: 4k.jpg - Tiempo: 0.611833 s - Bloques: 4 - Hilos por bloque: 16
+Imagen: 4k.jpg - Tiempo: 0.589014 s - Bloques: 4 - Hilos por bloque: 32
+Imagen: 4k.jpg - Tiempo: 0.550359 s - Bloques: 4 - Hilos por bloque: 64
+Imagen: 4k.jpg - Tiempo: 0.551438 s - Bloques: 4 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.539646 s - Bloques: 4 - Hilos por bloque: 256
+Imagen: 4k.jpg - Tiempo: 0.530565 s - Bloques: 5 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.529968 s - Bloques: 6 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.535807 s - Bloques: 7 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.514660 s - Bloques: 8 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.508293 s - Bloques: 9 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.501907 s - Bloques: 10 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.530338 s - Bloques: 11 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.500181 s - Bloques: 12 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.536631 s - Bloques: 13 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.514113 s - Bloques: 14 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.503272 s - Bloques: 15 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.488233 s - Bloques: 16 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.493329 s - Bloques: 24 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.560619 s - Bloques: 11 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.498503 s - Bloques: 24 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.510224 s - Bloques: 18 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.517846 s - Bloques: 12 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.505461 s - Bloques: 32 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.542489 s - Bloques: 22 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.551731 s - Bloques: 48 - Hilos por bloque: 128
+Imagen: 4k.jpg - Tiempo: 0.624687 s - Bloques: 256 - Hilos por bloque: 512
+Imagen: 4k.jpg - Tiempo: 0.173729 s - Bloques: 240 - Hilos por bloque: 1280
