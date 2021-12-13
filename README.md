@@ -4,7 +4,7 @@
 
 Compilar con: nvcc taller3.cu -o t3 -fopenmp \`pkg-config --cflags --libs opencv\` 
 
-Correr con: ./t3 4k.jpg 4ksobel.jpg 2 6
+Correr con: ./t3 4k.jpg 2 6
 
 **Nota:** los parámetros son: nombre de la imagen de entrada, número de bloques y número de hilos por bloque.
 
