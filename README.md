@@ -2,7 +2,7 @@
 
 ## Para probar individualmente:
 
-Compilar con: nvcc taller3.cu -o t3 -fopenmp \`pkg-config --cflags --libs opencv\` 
+Compilar con: nvcc taller3.cu -o taller3 -g \`pkg-config --cflags --libs opencv\`
 
 Correr con: ./t3 4k.jpg 4ksobel.jpg 2 6
 
