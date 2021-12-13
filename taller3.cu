@@ -127,8 +127,8 @@ int main(int argc, char *argv[])
 
     //-----------------------------------Lectura imagen------------------------------------//
     //Se carga la imagen original como una imagen a color
-    imgOrig = imread("4k.jpg", IMREAD_COLOR);
-    //imgOrig = imread(argv[1], IMREAD_COLOR);
+    //imgOrig = imread("4k.jpg", IMREAD_COLOR);
+    imgOrig = imread(argv[1], IMREAD_COLOR);
 	
     //Se verifica que se cargo correctamente
     if (!imgOrig.data)
@@ -153,10 +153,6 @@ int main(int argc, char *argv[])
     }
 
     size_t numElements = imgOrig.rows * imgOrig.cols;
-
-    cv::Mat testData(rows, cols, CV_8UC3, (void *)h_imgOrig);
-    //write Mat object to file
-    //cv::imwrite("TEST.jpg", testData);
 
     h_imgSobel = (unsigned char *)malloc(rows * cols * sizeof(unsigned char *)*3);
     h_imgGray = (unsigned char *)malloc(rows * cols * sizeof(unsigned char *)*3);
@@ -260,11 +256,9 @@ int main(int argc, char *argv[])
     //Se guarda la imagen correspondiente a sobel
     cv::Mat sobelData(rows, cols, CV_8UC3, (void *)h_imgSobel);
     //write Mat object to file
-    //cv::imwrite("sobelFinal.png", sobelData);
     cv::imwrite(argv[2], sobelData);
 
     //-----------------------------------CudaFree------------------------------------//
-    //al final
     err = cudaFree(d_imgOrig);
     if (err != cudaSuccess)
     {
