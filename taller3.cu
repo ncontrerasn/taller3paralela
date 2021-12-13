@@ -51,8 +51,19 @@ void noBorderProcessing(Mat imgGray, Mat imgSobel, float **Kernel, float **Kerne
 }
 
 //aca no es necesario pasarlas de a 3 pff jaja. esto seria para sobel
-__global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int cols, int rows, int numberElements, int totalThreads, float **Kernel, float **Kernel2)
+__global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int cols, int rows, int numberElements, int totalThreads)
 {
+
+    float Kernel[3][3] = {
+                          {-1, 0, 1},
+                          {-2, 0, 2},
+                          {-1, 0, 1}
+    };
+    float Kernel2[3][3] = {
+                          {-1, -2, -1},
+                          {0, 0, 0},
+                          {1, 2, 1}
+    };
 
     int offSet = cols * 3 + 3;
     int YoffSet = cols * 3;
@@ -63,7 +74,7 @@ __global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int c
     int initIteration = ((numberElements / totalThreads) * index) + offSet;
     int endIteration = initIteration + (numberElements / totalThreads) - 1;
 
-    if (endIteration < (numberElements - offSet*5) && index<4)
+    if (endIteration < (numberElements - offSet))
     {
         printf("Entro %i, inicio: %i y final %i\n", index, initIteration, endIteration);
         for (x = initIteration; x < endIteration; x = x + 3)
@@ -79,7 +90,7 @@ __global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int c
                 {
                     for (int j = -1; j <= 1; j++)
                     {
-                        printf("value  %u\n", Kernel[j + 1][k + 1]);
+                        //printf("value  %f\n", Kernel[j + 1][k + 1]);
                         sum = sum + Kernel[j + 1][k + 1] * d_imgGray[x + YoffSet * j + k*3 + f];
                         sum2 = sum2 + Kernel2[j + 1][k + 1] * d_imgGray[x + YoffSet * j + k*3 + f];
                     }
@@ -88,7 +99,7 @@ __global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int c
                 fsum = ceilf(sqrt((sum * sum) + (sum2 * sum2)));
                 //el valor resultante se substituye en el pixel correspondiente de la imagen objetivo
                 //printf("sum  %f, sum2: %f\n", sum, sum2);
-                //d_imgSobel[x+f] = fsum;
+                d_imgSobel[x+f] = fsum;
             }
         }
     }
@@ -160,11 +171,10 @@ int main(int argc, char *argv[])
     //-----------------------------------Variables------------------------------------//
     //errores de cuda
     cudaError_t err = cudaSuccess;
+    //son constantes para cuaquier tamaño de imagen?
     int blocksPerGrid, threadsPerBlock;
-    blocksPerGrid = 2;
-    //blocksPerGrid = argv[3];
-    threadsPerBlock = 6 / blocksPerGrid;
-    //threadsPerBlock = argv[4];
+    blocksPerGrid = 30;
+    threadsPerBlock = 256 / blocksPerGrid;
     int totalThreads = blocksPerGrid * threadsPerBlock;
     //Definimos el conjunto de variables que utilizaremos para manejar las imagenes
     //Esto gracias al tipo de dato Mat que permite manejar la imagen como un objeto con atributos
@@ -177,8 +187,7 @@ int main(int argc, char *argv[])
 
     //-----------------------------------Lectura imagen------------------------------------//
     //Se carga la imagen original como una imagen a color
-    imgOrig = imread("128p.png", IMREAD_COLOR);
-    //imgOrig = imread(argv[1], IMREAD_COLOR);
+    imgOrig = imread("4k.jpg", IMREAD_COLOR);
 
     //Se verifica que se cargo correctamente
     if (!imgOrig.data)
@@ -287,7 +296,7 @@ int main(int argc, char *argv[])
 
     //-----------------------------------WriteGreyImg------------------------------------//
     //nombre de la imagen en escala de grises
-    string string1("128p.png");
+    string string1("4k.jpg");
     string1 = string1.substr(0, string1.size() - 4);
     string1 += "grayscale.png";
 
@@ -322,7 +331,7 @@ int main(int argc, char *argv[])
 
     //Se definen los kernels para la operacion de sobel
     //uno que identifique los bordes verticales y uno para bordes horizontales
-    float **Kernel;
+    /*float **Kernel;
     float **Kernel2;
     Kernel = (float **)malloc(3 * sizeof(float *));
     Kernel2 = (float **)malloc(3 * sizeof(float *));
@@ -348,7 +357,7 @@ int main(int argc, char *argv[])
     Kernel2[1][2] = 0;
     Kernel2[2][0] = 1;
     Kernel2[2][1] = 2;
-    Kernel2[2][2] = 1;
+    Kernel2[2][2] = 1;*/
 
     //--------------------------------------------------------------------------------//
 
@@ -364,14 +373,14 @@ int main(int argc, char *argv[])
     //-----------------------------------__Global__------------------------------------//
 
     //Se llama a la funcion que realiza el procedimiento para hallar sobel
-    sobel<<<blocksPerGrid, threadsPerBlock>>>(d_imgGray, d_imgSobel,cols, rows, numElements * 3, totalThreads,Kernel,Kernel2);
+    sobel<<<blocksPerGrid, threadsPerBlock>>>(d_imgGray, d_imgSobel,cols, rows, numElements * 3, totalThreads);
     //#pragma omp barrier
-    for (int i = 0; i < 3; i++){
+    /*for (int i = 0; i < 3; i++){
         free(Kernel[i]);
         free(Kernel2[i]);
     }
     free(Kernel);
-    free(Kernel2);
+    free(Kernel2);*/
 
     //--------------------------------------------------------------------------------//
 
@@ -388,8 +397,6 @@ int main(int argc, char *argv[])
     cv::Mat sobelData(rows, cols, CV_8UC3, (void *)h_imgSobel);
     //write Mat object to file
     cv::imwrite("sobelFinal.png", sobelData);
-    //cv::imwrite(argv[2], sobelData);
-
 
     //-----------------------------------CudaFree------------------------------------//
     //al final
@@ -422,7 +429,7 @@ int main(int argc, char *argv[])
     ofstream myfile;
     myfile.open("tiempos.txt", std::ios_base::app);
     myfile << "Imagen: "
-           << "128p.png"
+           << "4k.jpg"
            << " - ";
     myfile << "Tiempo: " << tval_result.tv_sec << "." << tval_result.tv_usec << " s - ";
     myfile.close();
