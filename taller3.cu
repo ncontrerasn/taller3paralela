@@ -41,7 +41,6 @@ __global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int c
 
     if (endIteration < (numberElements - offSet))
     {
-        printf("Entro %i, inicio: %i y final %i\n", index, initIteration, endIteration);
         for (x = initIteration; x < endIteration; x = x + 3)
         {
             //Se debe realizar la operacion por cada uno de los colores RGB que se encuentran en cada pixel
@@ -67,10 +66,6 @@ __global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int c
             }
         }
     }
-    else
-    {
-        printf("No Entro %i, inicio: %i y final %i\n", index, initIteration, endIteration);
-    }
 
     __syncthreads();
 }
@@ -85,7 +80,6 @@ __global__ void gray(unsigned char *d_imgOrig, unsigned char *d_imgGray, int row
 
     if (endIteration < numberElements)
     {
-        printf("Entro %i, inicio: %i y final %i\n", index, initIteration, endIteration);
         for (x = initIteration; x < endIteration; x = x + 3)
         {
             unsigned char r = d_imgOrig[x + 0];
@@ -97,11 +91,6 @@ __global__ void gray(unsigned char *d_imgOrig, unsigned char *d_imgGray, int row
             d_imgGray[x + 2] = r * 0.299f + g * 0.587f + b * 0.114f;
         }
     }
-    else
-    {
-        printf("No Entro %i, inicio: %i y final %i\n", index, initIteration, endIteration);
-    }
-
     __syncthreads();
 }
 
@@ -111,10 +100,8 @@ int main(int argc, char *argv[])
     //errores de cuda
     cudaError_t err = cudaSuccess;
     int blocksPerGrid, threadsPerBlock;
-    blocksPerGrid = 30;
-    //blocksPerGrid = argv[3];
-    threadsPerBlock = 256 / blocksPerGrid;
-    //threadsPerBlock = argv[4];
+    blocksPerGrid = atoi(argv[3]);
+    threadsPerBlock = atoi(argv[4]) / blocksPerGrid;
     int totalThreads = blocksPerGrid * threadsPerBlock;
     //Definimos el conjunto de variables que utilizaremos para manejar las imagenes
     //Esto gracias al tipo de dato Mat que permite manejar la imagen como un objeto con atributos
@@ -212,9 +199,6 @@ int main(int argc, char *argv[])
     //-----------------------------------__Global__------------------------------------//
     //Se hace llamado al metodo encargado de pasar la imagen original a escala de grises
     //como paso fundamental antes de aplicar sobel
-
-    //greyscaleProcessing(imgOrig, imgGray);
-    printf("Tamano imagen %li, tamano *3: %li y hilos %i\n", numElements, numElements * 3, totalThreads);
     gray<<<blocksPerGrid, threadsPerBlock>>>(d_imgOrig, d_imgGray, rows, numElements * 3, totalThreads);
     //--------------------------------------------------------------------------------//
 
