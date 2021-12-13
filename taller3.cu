@@ -160,10 +160,11 @@ int main(int argc, char *argv[])
     //-----------------------------------Variables------------------------------------//
     //errores de cuda
     cudaError_t err = cudaSuccess;
-    //son constantes para cuaquier tamaño de imagen?
     int blocksPerGrid, threadsPerBlock;
     blocksPerGrid = 2;
+    //blocksPerGrid = argv[3];
     threadsPerBlock = 6 / blocksPerGrid;
+    //threadsPerBlock = argv[4];
     int totalThreads = blocksPerGrid * threadsPerBlock;
     //Definimos el conjunto de variables que utilizaremos para manejar las imagenes
     //Esto gracias al tipo de dato Mat que permite manejar la imagen como un objeto con atributos
@@ -177,6 +178,7 @@ int main(int argc, char *argv[])
     //-----------------------------------Lectura imagen------------------------------------//
     //Se carga la imagen original como una imagen a color
     imgOrig = imread("128p.png", IMREAD_COLOR);
+    //imgOrig = imread(argv[1], IMREAD_COLOR);
 
     //Se verifica que se cargo correctamente
     if (!imgOrig.data)
@@ -386,6 +388,8 @@ int main(int argc, char *argv[])
     cv::Mat sobelData(rows, cols, CV_8UC3, (void *)h_imgSobel);
     //write Mat object to file
     cv::imwrite("sobelFinal.png", sobelData);
+    //cv::imwrite(argv[2], sobelData);
+
 
     //-----------------------------------CudaFree------------------------------------//
     //al final
