@@ -50,6 +50,56 @@ void noBorderProcessing(Mat imgGray, Mat imgSobel, float **Kernel, float **Kerne
     }
 }
 
+//aca no es necesario pasarlas de a 3 pff jaja. esto seria para sobel
+__global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int cols, int rows, int numberElements, int totalThreads, float **Kernel, float **Kernel2)
+{
+
+    int offSet = cols * 3 + 3;
+    int YoffSet = cols * 3;
+    int x;
+
+    int index = (blockDim.x * blockIdx.x) + threadIdx.x;
+
+    int initIteration = ((numberElements / totalThreads) * index) + offSet;
+    int endIteration = initIteration + (numberElements / totalThreads) - 1;
+
+    if (endIteration < (numberElements - offSet*5) && index<4)
+    {
+        printf("Entro %i, inicio: %i y final %i\n", index, initIteration, endIteration);
+        for (x = initIteration; x < endIteration; x = x + 3)
+        {
+            //Se debe realizar la operacion por cada uno de los colores RGB que se encuentran en cada pixel
+            for (int f = 0; f < 3; f++)
+            {
+                float sum = 0.0;
+                float sum2 = 0.0;
+                float fsum = 0.0;
+                //Se establece con estos dos fors la operacion de convolucion entre la matriz de la imagen y los kernels
+                for (int k = -1; k <= 1; k++)
+                {
+                    for (int j = -1; j <= 1; j++)
+                    {
+                        printf("value  %u\n", Kernel[j + 1][k + 1]);
+                        sum = sum + Kernel[j + 1][k + 1] * d_imgGray[x + YoffSet * j + k*3 + f];
+                        sum2 = sum2 + Kernel2[j + 1][k + 1] * d_imgGray[x + YoffSet * j + k*3 + f];
+                    }
+                }
+                //Segun dicta el algoritmo se aplica la siguiente operacion
+                fsum = ceilf(sqrt((sum * sum) + (sum2 * sum2)));
+                //el valor resultante se substituye en el pixel correspondiente de la imagen objetivo
+                //printf("sum  %f, sum2: %f\n", sum, sum2);
+                //d_imgSobel[x+f] = fsum;
+            }
+        }
+    }
+    else
+    {
+        printf("No Entro %i, inicio: %i y final %i\n", index, initIteration, endIteration);
+    }
+
+    __syncthreads();
+}
+
 //Se encarga de recibida dos imagenes de mismo tamaño, sobrescribir una como
 //la version en escala de grises de la otra
 void greyscaleProcessing(Mat imgOrig, Mat imgGray)
@@ -73,26 +123,36 @@ void greyscaleProcessing(Mat imgOrig, Mat imgGray)
 }
 
 //aca no es necesario pasarlas de a 3 pff jaja. esto seria para sobel
-__global__ void gray(unsigned char *d_imgOrig, unsigned char *d_imgGray, int rows, int numberElements){
+__global__ void gray(unsigned char *d_imgOrig, unsigned char *d_imgGray, int rows, int numberElements, int totalThreads)
+{
 
-    int yOffset;
     int x;
 
-    int y = (blockDim.x * blockIdx.x + threadIdx.x);
+    int index = (blockDim.x * blockIdx.x) + threadIdx.x;
 
-    yOffset = y * rows;
-    if (y < numberElements)
+    int initIteration = (numberElements / totalThreads) * index;
+    int endIteration = initIteration + (numberElements / totalThreads) - 1;
+
+    if (endIteration < numberElements)
     {
-        for(x = 0; x < rows; x++)
-        {   
-        unsigned char r = d_imgOrig[yOffset + x + 0];
-	    unsigned char g = d_imgOrig[yOffset + x + 1];
-	    unsigned char b = d_imgOrig[yOffset + x + 2];
-	
-	    d_imgGray[yOffset + x] = r * 0.299f + g * 0.587f + b * 0.114f;
-        } 
+        printf("Entro %i, inicio: %i y final %i\n", index, initIteration, endIteration);
+        for (x = initIteration; x < endIteration; x = x + 3)
+        {
+            unsigned char r = d_imgOrig[x + 0];
+            unsigned char g = d_imgOrig[x + 1];
+            unsigned char b = d_imgOrig[x + 2];
+
+            d_imgGray[x + 0] = r * 0.299f + g * 0.587f + b * 0.114f;
+            d_imgGray[x + 1] = r * 0.299f + g * 0.587f + b * 0.114f;
+            d_imgGray[x + 2] = r * 0.299f + g * 0.587f + b * 0.114f;
+        }
     }
-    
+    else
+    {
+        printf("No Entro %i, inicio: %i y final %i\n", index, initIteration, endIteration);
+    }
+
+    __syncthreads();
 }
 
 int main(int argc, char *argv[])
@@ -102,20 +162,21 @@ int main(int argc, char *argv[])
     cudaError_t err = cudaSuccess;
     //son constantes para cuaquier tamaño de imagen?
     int blocksPerGrid, threadsPerBlock;
-    blocksPerGrid = 30;
-    threadsPerBlock = 256/blocksPerGrid;
+    blocksPerGrid = 2;
+    threadsPerBlock = 6 / blocksPerGrid;
+    int totalThreads = blocksPerGrid * threadsPerBlock;
     //Definimos el conjunto de variables que utilizaremos para manejar las imagenes
     //Esto gracias al tipo de dato Mat que permite manejar la imagen como un objeto con atributos
     Mat imgOrig, imgSobel;
     unsigned char *h_imgOrig, *h_imgSobel, *h_imgGray;
     unsigned char *d_imgOrig, *d_imgSobel, *d_imgGray;
     int rows; //number of rows of pixels
-	int cols; //number of columns of pixels
+    int cols; //number of columns of pixels
     //--------------------------------------------------------------------------------//
 
     //-----------------------------------Lectura imagen------------------------------------//
     //Se carga la imagen original como una imagen a color
-    imgOrig = imread("1080p.jpg", IMREAD_COLOR);
+    imgOrig = imread("128p.png", IMREAD_COLOR);
 
     //Se verifica que se cargo correctamente
     if (!imgOrig.data)
@@ -127,26 +188,26 @@ int main(int argc, char *argv[])
 
     //-----------------------------------Malloc------------------------------------//
     rows = imgOrig.rows;
-	cols = imgOrig.cols;
+    cols = imgOrig.cols;
 
-    h_imgOrig = (unsigned char*) malloc(rows * cols * sizeof(unsigned char) * 3);
-    unsigned char* rgb_image = imgOrig.data;
+    h_imgOrig = (unsigned char *)malloc(rows * cols * sizeof(unsigned char) * 3);
+    unsigned char *rgb_image = imgOrig.data;
 
-	//populate host's rgb data array
-	int x = 0;
-	for (x = 0; x < rows * cols * 3; x++)
-	{
-		h_imgOrig[x] = rgb_image[x];
-	}
-	
-	size_t numElements = imgOrig.rows * imgOrig.cols;
+    //populate host's rgb data array
+    int x = 0;
+    for (x = 0; x < rows * cols * 3; x++)
+    {
+        h_imgOrig[x] = rgb_image[x];
+    }
 
-    cv::Mat testData(rows, cols, CV_8UC3,(void *) h_imgOrig);
-	//write Mat object to file
-	cv::imwrite("TEST.jpg", testData);
+    size_t numElements = imgOrig.rows * imgOrig.cols;
 
-    h_imgSobel = (unsigned char*) malloc(rows * cols * sizeof(unsigned char*));
-    h_imgGray = (unsigned char*) malloc(rows * cols * sizeof(unsigned char*));
+    cv::Mat testData(rows, cols, CV_8UC3, (void *)h_imgOrig);
+    //write Mat object to file
+    cv::imwrite("TEST.jpg", testData);
+
+    h_imgSobel = (unsigned char *)malloc(rows * cols * sizeof(unsigned char *)*3);
+    h_imgGray = (unsigned char *)malloc(rows * cols * sizeof(unsigned char *)*3);
     //--------------------------------------------------------------------------------//
 
     //-----------------------------------CudaMalloc------------------------------------//
@@ -158,26 +219,26 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMalloc(&d_imgSobel, sizeof(unsigned char) * numElements);
+    err = cudaMalloc(&d_imgSobel, sizeof(unsigned char) * numElements * 3);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate device vector vector imgSobel (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
-    err = cudaMemset(d_imgSobel, 0, sizeof(unsigned char) * numElements);
+    err = cudaMemset(d_imgSobel, 0, sizeof(unsigned char) * numElements * 3);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to set memory device vector imgSobel (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMalloc(&d_imgGray, sizeof(unsigned char) * numElements);
+    err = cudaMalloc(&d_imgGray, sizeof(unsigned char) * numElements * 3);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate device vector imgGray (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
-    err = cudaMemset(d_imgGray, 0, sizeof(unsigned char) * numElements);
+    err = cudaMemset(d_imgGray, 0, sizeof(unsigned char) * numElements * 3);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to set memory device vector imgGray (error code %s)!\n", cudaGetErrorString(err));
@@ -203,14 +264,14 @@ int main(int argc, char *argv[])
     //-----------------------------------__Global__------------------------------------//
     //Se hace llamado al metodo encargado de pasar la imagen original a escala de grises
     //como paso fundamental antes de aplicar sobel
-    
-    //greyscaleProcessing(imgOrig, imgGray);
 
-    gray<<<blocksPerGrid, threadsPerBlock>>>(d_imgOrig, d_imgGray, rows, numElements);
+    //greyscaleProcessing(imgOrig, imgGray);
+    printf("Tamano imagen %li, tamano *3: %li y hilos %i\n", numElements, numElements * 3, totalThreads);
+    gray<<<blocksPerGrid, threadsPerBlock>>>(d_imgOrig, d_imgGray, rows, numElements * 3, totalThreads);
     //--------------------------------------------------------------------------------//
 
     //-----------------------------------CudaMemcpy - Results------------------------------------//
-    err = cudaMemcpy(h_imgGray, d_imgGray, sizeof(unsigned char) * numElements, cudaMemcpyDeviceToHost);
+    err = cudaMemcpy(h_imgGray, d_imgGray, sizeof(unsigned char) * numElements * 3, cudaMemcpyDeviceToHost);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to copy vector imgGray from device to host (error code %s)!\n", cudaGetErrorString(err));
@@ -218,40 +279,45 @@ int main(int argc, char *argv[])
     }
     //--------------------------------------------------------------------------------//
 
-    //-----------------------------------CudaFree------------------------------------//
-    //al final 
-    err = cudaFree(d_imgOrig);
-    if (err != cudaSuccess)
-    {
-        fprintf(stderr, "Failed to free device d_imgOrig (error code %s)!\n", cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
-    err =cudaFree(d_imgGray);
-    if (err != cudaSuccess)
-    {
-        fprintf(stderr, "Failed to free device d_imgGray (error code %s)!\n", cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
-    err =cudaFree(d_imgSobel);
-    if (err != cudaSuccess)
-    {
-        fprintf(stderr, "Failed to free device d_imgSobel (error code %s)!\n", cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
-    //--------------------------------------------------------------------------------//
+    printf("--------------------------------GrayscaleDONE------------------------------------\n");
+    printf("--------------------------------GrayscaleDONE------------------------------------\n");
+    printf("--------------------------------GrayscaleDONE------------------------------------\n");
 
     //-----------------------------------WriteGreyImg------------------------------------//
     //nombre de la imagen en escala de grises
-    string string1("1080p.jpg");
+    string string1("128p.png");
     string1 = string1.substr(0, string1.size() - 4);
     string1 += "grayscale.png";
 
-    cv::Mat greyData(rows, cols, CV_8UC1,(void *) h_imgGray);
-	//write Mat object to file
-	cv::imwrite(string1, greyData);
+    cv::Mat greyData(rows, cols, CV_8UC3, (void *)h_imgGray);
+    //write Mat object to file
+    cv::imwrite(string1, greyData);
+
+    /*for (x = 0; x < cols * 3; x++)
+	{
+		h_imgSobel[x] = h_imgGray[x];
+        h_imgSobel[x + cols*3]=255;
+        h_imgSobel[x + cols*2*3]=200;
+        h_imgSobel[x + cols*3*3]=150;
+        h_imgSobel[x + cols*4*3]=100;
+        h_imgSobel[x + cols*5*3]=50;
+	}
+    int offset = cols * 3 + 3;
+    x = offset;
+    h_imgSobel[x - offset + 0] = 255;
+    h_imgSobel[x - offset + 1] = 255;
+    h_imgSobel[x - offset + 2] = 255;
+    h_imgSobel[x] = 255;
+    h_imgSobel[x + 1] = 255;
+    h_imgSobel[x + 2] = 255;
+
+    cv::Mat sobelData(rows, cols, CV_8UC3, (void *)h_imgSobel);
+    //write Mat object to file
+    cv::imwrite("sobelTest.jpg", sobelData);*/
     //--------------------------------------------------------------------------------//
 
-    /*
+    //-----------------------------------Sobel - kernels------------------------------------//
+
     //Se definen los kernels para la operacion de sobel
     //uno que identifique los bordes verticales y uno para bordes horizontales
     float **Kernel;
@@ -281,11 +347,22 @@ int main(int argc, char *argv[])
     Kernel2[2][0] = 1;
     Kernel2[2][1] = 2;
     Kernel2[2][2] = 1;
-    //Se vuelve a hacer una copia, en este caso, para tener una imagen donde registrar el sobel
-    //utilizar la misma variable ocacionaria errores en el procedimiento de sobel
-    imgSobel = imgGray.clone();
+
+    //--------------------------------------------------------------------------------//
+
+    //-----------------------------------CudaMemcpy------------------------------------//
+    /*err = cudaMemcpy(d_imgGray, h_imgGray, sizeof(unsigned char) * numElements * 3, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to copy vector h_imgGray from host to device (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }*/
+    //--------------------------------------------------------------------------------//
+
+    //-----------------------------------__Global__------------------------------------//
+
     //Se llama a la funcion que realiza el procedimiento para hallar sobel
-    noBorderProcessing(imgGray, imgSobel, Kernel, Kernel2);
+    sobel<<<blocksPerGrid, threadsPerBlock>>>(d_imgGray, d_imgSobel,cols, rows, numElements * 3, totalThreads,Kernel,Kernel2);
     //#pragma omp barrier
     for (int i = 0; i < 3; i++){
         free(Kernel[i]);
@@ -293,9 +370,44 @@ int main(int argc, char *argv[])
     }
     free(Kernel);
     free(Kernel2);
+
+    //--------------------------------------------------------------------------------//
+
+    //-----------------------------------CudaMemcpy - Results------------------------------------//
+    err = cudaMemcpy(h_imgSobel, d_imgSobel, sizeof(unsigned char) * numElements * 3, cudaMemcpyDeviceToHost);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to copy vector d_imgSobel from device to host (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    //--------------------------------------------------------------------------------//
+
     //Se guarda la imagen correspondiente a sobel
-    imwrite(argv[2], imgSobel);
-    */
+    cv::Mat sobelData(rows, cols, CV_8UC3, (void *)h_imgSobel);
+    //write Mat object to file
+    cv::imwrite("sobelFinal.png", sobelData);
+
+    //-----------------------------------CudaFree------------------------------------//
+    //al final
+    err = cudaFree(d_imgOrig);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to free device d_imgOrig (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    err = cudaFree(d_imgGray);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to free device d_imgGray (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    err = cudaFree(d_imgSobel);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to free device d_imgSobel (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+    //--------------------------------------------------------------------------------//
 
     //-----------------------------------Tiempo - Final------------------------------------//
     //Se finaliza el registro del tiempo
@@ -305,11 +417,13 @@ int main(int argc, char *argv[])
     //escritura de los tiempos en el txt
     ofstream myfile;
     myfile.open("tiempos.txt", std::ios_base::app);
-    myfile << "Imagen: " << "1080p.jpg" << " - ";
+    myfile << "Imagen: "
+           << "128p.png"
+           << " - ";
     myfile << "Tiempo: " << tval_result.tv_sec << "." << tval_result.tv_usec << " s - ";
     myfile.close();
 
-    printf("%ld.%ld \n",tval_result.tv_sec,tval_result.tv_usec);
+    printf("%ld.%ld \n", tval_result.tv_sec, tval_result.tv_usec);
     //---------------------------------------------------------------------------------//
 
     return 0;
