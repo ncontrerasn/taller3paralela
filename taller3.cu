@@ -270,8 +270,6 @@ int main(int argc, char *argv[])
     myfile << "Tiempo: " << tval_result.tv_sec << "." << tval_result.tv_usec << " s - ";
     myfile << "Bloques: " << blocksPerGrid << " - Hilos por bloque: " << threadsPerBlock << "\n";
     myfile.close();
-
-    printf("%ld.%ld \n", tval_result.tv_sec, tval_result.tv_usec);
     //---------------------------------------------------------------------------------//
 
     return 0;
