@@ -54,7 +54,6 @@ __global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int c
                 {
                     for (int j = -1; j <= 1; j++)
                     {
-                        //printf("value  %f\n", Kernel[j + 1][k + 1]);
                         sum = sum + Kernel[j + 1][k + 1] * d_imgGray[x + YoffSet * j + k*3 + f];
                         sum2 = sum2 + Kernel2[j + 1][k + 1] * d_imgGray[x + YoffSet * j + k*3 + f];
                     }
@@ -101,7 +100,7 @@ int main(int argc, char *argv[])
     cudaError_t err = cudaSuccess;
     int blocksPerGrid, threadsPerBlock;
     blocksPerGrid = atoi(argv[3]);
-    threadsPerBlock = atoi(argv[4]) / blocksPerGrid;
+    threadsPerBlock = atoi(argv[4]) / blocksPerGrid;//????
     int totalThreads = blocksPerGrid * threadsPerBlock;
     //Definimos el conjunto de variables que utilizaremos para manejar las imagenes
     //Esto gracias al tipo de dato Mat que permite manejar la imagen como un objeto con atributos
@@ -114,7 +113,6 @@ int main(int argc, char *argv[])
 
     //-----------------------------------Lectura imagen------------------------------------//
     //Se carga la imagen original como una imagen a color
-    //imgOrig = imread("4k.jpg", IMREAD_COLOR);
     imgOrig = imread(argv[1], IMREAD_COLOR);
 	
     //Se verifica que se cargo correctamente
@@ -132,12 +130,10 @@ int main(int argc, char *argv[])
     h_imgOrig = (unsigned char *)malloc(rows * cols * sizeof(unsigned char) * 3);
     unsigned char *rgb_image = imgOrig.data;
 
-    //populate host's rgb data array
+    //llenar el array de datos rgb del host
     int x = 0;
     for (x = 0; x < rows * cols * 3; x++)
-    {
         h_imgOrig[x] = rgb_image[x];
-    }
 
     size_t numElements = imgOrig.rows * imgOrig.cols;
 
@@ -216,9 +212,9 @@ int main(int argc, char *argv[])
     string string1((argv[1]));
     string1 = string1.substr(0, string1.size() - 4);
     string1 += "grayscale.png";
-
+	
+    //escribir imagen en escala de grises
     cv::Mat greyData(rows, cols, CV_8UC3, (void *)h_imgGray);
-    //write Mat object to file
     cv::imwrite(string1, greyData);
     //--------------------------------------------------------------------------------//
 
@@ -239,7 +235,6 @@ int main(int argc, char *argv[])
 
     //Se guarda la imagen correspondiente a sobel
     cv::Mat sobelData(rows, cols, CV_8UC3, (void *)h_imgSobel);
-    //write Mat object to file
     cv::imwrite(argv[2], sobelData);
 
     //-----------------------------------CudaFree------------------------------------//
