@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     cudaError_t err = cudaSuccess;
     int blocksPerGrid, threadsPerBlock;
     blocksPerGrid = atoi(argv[3]);
-    threadsPerBlock = atoi(argv[4]);//????
+    threadsPerBlock = atoi(argv[4]);
     int totalThreads = blocksPerGrid * threadsPerBlock;
     //Definimos el conjunto de variables que utilizaremos para manejar las imagenes
     //Esto gracias al tipo de dato Mat que permite manejar la imagen como un objeto con atributos
