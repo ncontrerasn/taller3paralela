@@ -27,7 +27,7 @@ __shared__ float Kernel2[3][3];
 
     int index = (blockDim.x * blockIdx.x) + threadIdx.x;
 	
-if (blockIdx.x==0){
+if (threadIdx.x==0){
 	
 Kernel[0][0] = -1;
 Kernel[0][1] = 0;
