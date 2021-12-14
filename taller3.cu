@@ -19,9 +19,6 @@ using std::ofstream;
 __global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int cols, int rows, int numberElements, int totalThreads)
 {
 
-__shared__ float Kernel[3][3];
-__shared__ float Kernel2[3][3];
-
     int offSet = cols * 3 + 3;
     int YoffSet = cols * 3;
     int x;
@@ -29,12 +26,13 @@ __shared__ float Kernel2[3][3];
     int index = (blockDim.x * blockIdx.x) + threadIdx.x;
 	
 if (index==0){
-Kernel[3][3] = {
+	
+__shared__ Kernel[3][3] = {
                  {-1, 0, 1},
                  {-2, 0, 2},
                  {-1, 0, 1}
     };
-Kernel2[3][3] = {
+__shared__ Kernel2[3][3] = {
                     {-1, -2, -1},
                     {0, 0, 0},
                     {1, 2, 1}
