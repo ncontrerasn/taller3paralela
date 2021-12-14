@@ -18,6 +18,8 @@ using std::ofstream;
 //Se encarga de realiza el algoritmo de sobel a la imagen
 __global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int cols, int rows, int numberElements, int totalThreads)
 {
+__shared__ float Kernel[3][3];
+__shared__ float Kernel2[3][3];
 
     int offSet = cols * 3 + 3;
     int YoffSet = cols * 3;
@@ -27,16 +29,26 @@ __global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int c
 	
 if (index==0){
 	
-__shared__ float Kernel[3][3] = {
-                 {-1, 0, 1},
-                 {-2, 0, 2},
-                 {-1, 0, 1}
-    };
-__shared__ float Kernel2[3][3] = {
-                    {-1, -2, -1},
-                    {0, 0, 0},
-                    {1, 2, 1}
-    };
+Kernel[0][0] = -1;
+Kernel[0][1] = 0;
+Kernel[0][2] = 1;
+Kernel[1][0] = -2;
+Kernel[1][1] = 0;
+Kernel[1][2] = 2;
+Kernel[2][0] = -1;
+Kernel[2][1] = 0;
+Kernel[2][2] = 1;
+
+Kernel2[0][0] = -1;
+Kernel2[0][1] = -2;
+Kernel2[0][2] = -1;
+Kernel2[1][0] = 0;
+Kernel2[1][1] = 0;
+Kernel2[1][2] = 0;
+Kernel2[2][0] = 1;
+Kernel2[2][1] = 2;
+Kernel2[2][2] = 1;
+
 }
 	__syncthreads();
 
