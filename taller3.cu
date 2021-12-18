@@ -10,6 +10,7 @@
 #include <string>
 #include <math.h>
 #include <opencv2/core/core.hpp>
+#include <chrono>
 
 using namespace std;
 using namespace cv;
@@ -18,39 +19,39 @@ using std::ofstream;
 //Se encarga de realiza el algoritmo de sobel a la imagen
 __global__ void sobel(unsigned char *d_imgGray, unsigned char *d_imgSobel, int cols, int rows, int numberElements, int totalThreads)
 {
-__shared__ float Kernel[3][3];
-__shared__ float Kernel2[3][3];
+    __shared__ float Kernel[3][3];
+    __shared__ float Kernel2[3][3];
 
     int offSet = cols * 3 + 3;
     int YoffSet = cols * 3;
     int x;
 
     int index = (blockDim.x * blockIdx.x) + threadIdx.x;
-	
-if (threadIdx.x==0){
-	
-Kernel[0][0] = -1;
-Kernel[0][1] = 0;
-Kernel[0][2] = 1;
-Kernel[1][0] = -2;
-Kernel[1][1] = 0;
-Kernel[1][2] = 2;
-Kernel[2][0] = -1;
-Kernel[2][1] = 0;
-Kernel[2][2] = 1;
 
-Kernel2[0][0] = -1;
-Kernel2[0][1] = -2;
-Kernel2[0][2] = -1;
-Kernel2[1][0] = 0;
-Kernel2[1][1] = 0;
-Kernel2[1][2] = 0;
-Kernel2[2][0] = 1;
-Kernel2[2][1] = 2;
-Kernel2[2][2] = 1;
+    if (threadIdx.x == 0)
+    {
 
-}
-	__syncthreads();
+        Kernel[0][0] = -1;
+        Kernel[0][1] = 0;
+        Kernel[0][2] = 1;
+        Kernel[1][0] = -2;
+        Kernel[1][1] = 0;
+        Kernel[1][2] = 2;
+        Kernel[2][0] = -1;
+        Kernel[2][1] = 0;
+        Kernel[2][2] = 1;
+
+        Kernel2[0][0] = -1;
+        Kernel2[0][1] = -2;
+        Kernel2[0][2] = -1;
+        Kernel2[1][0] = 0;
+        Kernel2[1][1] = 0;
+        Kernel2[1][2] = 0;
+        Kernel2[2][0] = 1;
+        Kernel2[2][1] = 2;
+        Kernel2[2][2] = 1;
+    }
+    __syncthreads();
 
     int initIteration = ((numberElements / totalThreads) * index) + offSet;
     int endIteration = initIteration + (numberElements / totalThreads) - 1;
@@ -70,14 +71,14 @@ Kernel2[2][2] = 1;
                 {
                     for (int j = -1; j <= 1; j++)
                     {
-                        sum = sum + Kernel[j + 1][k + 1] * d_imgGray[x + YoffSet * j + k*3 + f];
-                        sum2 = sum2 + Kernel2[j + 1][k + 1] * d_imgGray[x + YoffSet * j + k*3 + f];
+                        sum = sum + Kernel[j + 1][k + 1] * d_imgGray[x + YoffSet * j + k * 3 + f];
+                        sum2 = sum2 + Kernel2[j + 1][k + 1] * d_imgGray[x + YoffSet * j + k * 3 + f];
                     }
                 }
                 //Segun dicta el algoritmo se aplica la siguiente operacion
                 fsum = ceilf(sqrt((sum * sum) + (sum2 * sum2)));
                 //el valor resultante se substituye en el pixel correspondiente de la imagen objetivo
-                d_imgSobel[x+f] = fsum;
+                d_imgSobel[x + f] = fsum;
             }
         }
     }
@@ -123,14 +124,14 @@ int main(int argc, char *argv[])
     Mat imgOrig, imgSobel;
     unsigned char *h_imgOrig, *h_imgSobel, *h_imgGray;
     unsigned char *d_imgOrig, *d_imgSobel, *d_imgGray;
-    int rows; 
-    int cols; 
+    int rows;
+    int cols;
     //--------------------------------------------------------------------------------//
 
     //-----------------------------------Lectura imagen------------------------------------//
     //Se carga la imagen original como una imagen a color
     imgOrig = imread(argv[1], IMREAD_COLOR);
-	
+
     //Se verifica que se cargo correctamente
     if (!imgOrig.data)
     {
@@ -153,8 +154,8 @@ int main(int argc, char *argv[])
 
     size_t numElements = imgOrig.rows * imgOrig.cols;
 
-    h_imgSobel = (unsigned char *)malloc(rows * cols * sizeof(unsigned char *)*3);
-    h_imgGray = (unsigned char *)malloc(rows * cols * sizeof(unsigned char *)*3);
+    h_imgSobel = (unsigned char *)malloc(rows * cols * sizeof(unsigned char *) * 3);
+    h_imgGray = (unsigned char *)malloc(rows * cols * sizeof(unsigned char *) * 3);
     //--------------------------------------------------------------------------------//
 
     //-----------------------------------CudaMalloc------------------------------------//
@@ -195,8 +196,9 @@ int main(int argc, char *argv[])
 
     //-----------------------------------Tiempo------------------------------------//
     //Establecemos las variables de tiempo para las mediciones respectivas
-    struct timeval tval_before, tval_after, tval_result;
-    gettimeofday(&tval_before, NULL);
+    /*struct timeval tval_before, tval_after, tval_result;
+    gettimeofday(&tval_before, NULL);*/
+    auto begin = std::chrono::high_resolution_clock::now();
     //--------------------------------------------------------------------------------//
 
     //-----------------------------------CudaMemcpy------------------------------------//
@@ -228,7 +230,7 @@ int main(int argc, char *argv[])
     string string1((argv[1]));
     string1 = string1.substr(0, string1.size() - 4);
     string1 += "grayscale.png";
-	
+
     //escribir imagen en escala de grises
     cv::Mat greyData(rows, cols, CV_8UC3, (void *)h_imgGray);
     cv::imwrite(string1, greyData);
@@ -237,7 +239,7 @@ int main(int argc, char *argv[])
     //-----------------------------------__Global__------------------------------------//
 
     //Se llama a la funcion que realiza el procedimiento para hallar sobel
-    sobel<<<blocksPerGrid, threadsPerBlock>>>(d_imgGray, d_imgSobel,cols, rows, numElements * 3, totalThreads);
+    sobel<<<blocksPerGrid, threadsPerBlock>>>(d_imgGray, d_imgSobel, cols, rows, numElements * 3, totalThreads);
     //--------------------------------------------------------------------------------//
 
     //-----------------------------------CudaMemcpy - Results------------------------------------//
@@ -276,14 +278,16 @@ int main(int argc, char *argv[])
 
     //-----------------------------------Tiempo - Final------------------------------------//
     //Se finaliza el registro del tiempo
-    gettimeofday(&tval_after, NULL);
-    timersub(&tval_after, &tval_before, &tval_result);
+    /*gettimeofday(&tval_after, NULL);
+    timersub(&tval_after, &tval_before, &tval_result);*/
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
 
     //escritura de los tiempos en el txt
     ofstream myfile;
     myfile.open("tiempos.txt", std::ios_base::app);
     myfile << "Imagen: " << argv[1] << " - ";
-    myfile << "Tiempo: " << tval_result.tv_sec << "." << tval_result.tv_usec << " s - ";
+    myfile << "Time measured: " << elapsed.count() * 1e-9 << " seconds. ";
     myfile << "Bloques: " << blocksPerGrid << " - Hilos por bloque: " << threadsPerBlock << "\n";
     myfile.close();
     //---------------------------------------------------------------------------------//
